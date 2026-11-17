@@ -31,9 +31,7 @@ const defaults={ops:[
 {id:'finalreport',name:'Final Report QC',unit:'báo cáo',received:'',done:10,owner:'Trinh',note:'10 báo cáo đã kiểm tra'},
 {id:'recording',name:'Teaching Recordings QC',unit:'video',received:'',done:2,owner:'Trinh',note:'2 recordings đã kiểm tra'},
 {id:'teacher',name:'Teacher Training & Support',unit:'giáo viên',received:'',done:2,owner:'Lam',note:'Hỗ trợ 1-1'},
-{id:'isw',name:'ISW Teaching',unit:'khóa',received:'',done:2,owner:'Tomas',note:'2 khóa đã giảng dạy'},
-{id:'ecother',name:'AC/EC Support khác',unit:'yêu cầu',received:'',done:'',owner:'Lam, Cuong, Mya',note:'Có phát sinh, chưa có số lượng'},
-{id:'speaking',name:'Speaking Tests',unit:'lượt thi',received:'',done:'',owner:'Cuong',note:'Đã triển khai, chưa có số lượng'}
+{id:'isw',name:'ISW Teaching',unit:'khóa',received:'',done:2,owner:'Tomas',note:'2 khóa đã giảng dạy'}
 ],projects:[
 {name:'FISV Grammar Lessons',result:'Đang biên soạn học liệu',status:'Đang thực hiện',owner:'Mya, Cuong'},
 {name:'IELTS Workbooks Terms 3 & 4',result:'Dự kiến hoàn thiện trong tháng 12/2026',status:'Đang thực hiện',owner:'Mya'},
@@ -47,8 +45,8 @@ const defaults={ops:[
 {name:'CAT Plan 2027',result:'Đang xác định thứ tự ưu tiên',status:'Đang xây dựng',owner:'Mya, Lam'},
 {name:'Teacher Contract Administration',result:'Đã gửi email wrap-up hợp đồng',status:'Đã gửi',owner:'Lam'}
 ],next:[
-{task:'Review đề thi Trí Đức',target:'Hoàn thành review đề mới',owner:'Lam'},
-{task:'Mock Test QC',target:'Kiểm tra mock tests của 9 lớp (ghi chú: 03 mock classes)',owner:'Trinh'},
+{task:'Đề thi Trí Đức',target:'Review bộ đề mới, chưa chốt số lượng',owner:'Lam'},
+{task:'Đề thi CLT (IELTS General)',target:'Chuẩn bị 3–4 đề thi dự kiến cho tháng 12/2026',owner:'Mya'},
 {task:'Final Report QC',target:'9 báo cáo',owner:'Trinh'},
 {task:'Teacher Observation',target:'Bắt đầu dự giờ',owner:'Trinh'},
 {task:'MC2–3 Curriculum',target:'Cập nhật đề xuất chuyên môn',owner:'Lam'},
@@ -63,7 +61,25 @@ const defaults={ops:[
 {issue:'QC Teaching',status:'Đang thử nghiệm',action:'Theo dõi số ca hỗ trợ và kết quả'},
 {issue:'CAT Plan 2027',status:'Chưa chốt ưu tiên',action:'Thống nhất các dự án trọng tâm'}
 ]};
-const key='cat_weekly_2026_11_16_v1';let data;try{let stored=JSON.parse(localStorage.getItem(key));data=stored&&stored.ops?stored:structuredClone(defaults)}catch(e){data=structuredClone(defaults)}
+const key='cat_weekly_2026_11_16_v2';let data;
+try{
+  const saved=JSON.parse(localStorage.getItem(key));
+  if(saved&&saved.ops){data=saved}
+  else {
+    const old=JSON.parse(localStorage.getItem('cat_weekly_2026_11_16_v1'));
+    data=structuredClone(defaults);
+    if(old&&old.ops){
+      for(const item of data.ops){const match=old.ops.find(x=>x.id===item.id);if(match)Object.assign(item,match)}
+      for(const section of ['projects','issues']){
+        for(const item of data[section]){const field=section==='projects'?'name':'issue';const match=(old[section]||[]).find(x=>x[field]===item[field]);if(match)Object.assign(item,match)}
+      }
+      for(const item of data.next){
+        if(item.task==='Đề thi Trí Đức'||item.task==='Đề thi CLT (IELTS General)')continue;
+        const match=(old.next||[]).find(x=>x.task===item.task);if(match)Object.assign(item,match)
+      }
+    }
+  }
+}catch(e){data=structuredClone(defaults)}
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const n=s=>s===''||s===null||s===undefined?null:Number(s);const fmt=s=>s===null||s===undefined||s===''?'—':new Intl.NumberFormat('vi-VN').format(s);const rate=r=>{let a=n(r.received),b=n(r.done);return a!==null&&a>0&&b!==null&&b<=a?b/a*100:null};
 function inp(type,index,field,extra=''){let v=data[type][index][field]??'';return `<input aria-label="${esc(field)}" class="cell edit ${extra}" data-type="${type}" data-index="${index}" data-field="${field}" value="${esc(v)}" ${extra.includes('number')?'type="number" min="0" step="1" inputmode="numeric"':'type="text"'}>`}
 function render(){
